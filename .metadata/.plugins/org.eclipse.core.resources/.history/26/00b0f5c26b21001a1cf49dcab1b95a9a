@@ -1,0 +1,88 @@
+import java.awt.Color;
+import java.awt.Font;
+
+import javax.swing.*;
+
+public class ScorePanel extends JPanel {
+	private Score s = new Score();
+	
+	private int score = s.getScore();
+	
+	private JLabel scoreText = new JLabel("Score:");
+	private JLabel scoreLabel = new JLabel(Integer.toString(score));
+	private JLabel userNameText = new JLabel("User Name:");
+	private JLabel userName = new JLabel(new UserName().getUserName());
+	
+	private JLabel police;
+	private ImageIcon policeImg[] = new ImageIcon[2];
+	
+	public ScorePanel() {
+		scoreLabel = new JLabel("0");
+
+		setBackground(Color.YELLOW);
+		setLayout(null);
+		
+		userNameText.setSize(100, 30);
+		userNameText.setLocation(10, 10);
+		add(userNameText);
+		
+		userName.setSize(100, 30);
+		userName.setLocation(90, 10);
+		add(userName);
+		
+		scoreText.setSize(50, 30);
+		scoreText.setLocation(10, 30);
+		add(scoreText);
+
+		scoreLabel.setSize(100, 30);
+		scoreLabel.setLocation(70, 30);
+		add(scoreLabel);
+		
+		ImageIcon icon[] = new ImageIcon[2];
+		icon[0] = new ImageIcon("°æÂû2.png");
+		icon[1] = new ImageIcon("°æÂû fail3.png");
+		
+		
+		policeImg[0] = new ImageIcon("°æÂû2.png");
+		policeImg[1] = new ImageIcon("°æÂû fail3.png");
+		
+		police = new JLabel();
+		police.setIcon(policeImg[0]);
+		
+		police.setSize(200, 300);
+		police.setLocation(50, 10);
+		
+		add(police);
+		
+		ScoreThread st = new ScoreThread();
+		st.start();
+	}
+	
+	public void setFont(String fontname, int fontsize) {
+		scoreLabel.setFont(new Font(fontname, Font.BOLD, fontsize));
+		scoreText.setFont(new Font(fontname, Font.BOLD, fontsize));
+		userName.setFont(new Font(fontname, Font.BOLD, fontsize));
+		userNameText.setFont(new Font(fontname, Font.BOLD, fontsize));
+	}
+	
+	public void setForeground(int r, int g, int b) {
+		Color c = new Color(r, g, b);
+		scoreLabel.setForeground(c);
+		scoreText.setForeground(c);
+		userName.setForeground(c);
+		userNameText.setForeground(c);
+	}
+	
+	public void setBackground(int r, int g, int b) {
+		Color c = new Color(r, g, b);
+		setBackground(c);
+	}
+
+	class ScoreThread extends Thread {
+		public void run() {
+			while (true) {
+				scoreLabel.setText(Integer.toString(s.getScore()));
+			}
+		}
+	}
+}

@@ -1,0 +1,12 @@
+import java.util.Vector;
+
+public class UserName {
+	private static String userName = null;
+
+	public Vector<String> getWord() {
+		if(userName == null) {
+			openFile();
+		}
+		return userName;
+	}
+}

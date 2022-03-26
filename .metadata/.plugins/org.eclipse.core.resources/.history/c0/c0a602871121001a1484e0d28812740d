@@ -1,0 +1,134 @@
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.util.Iterator;
+import java.util.Vector;
+
+import javax.swing.*;
+
+import java.io.*;
+
+public class EditPanel extends JPanel {
+	private Vector<String> word = new WordFile().getWord();
+	private JTextField tf;
+	private JLabel wordCount;
+	private JLabel saveText;
+	private JTextField findtf;
+
+	public EditPanel() {
+		setBackground(Color.YELLOW);
+		setLayout(new FlowLayout(FlowLayout.CENTER, 25, 5));
+
+		tf = new JTextField(21);
+		add(tf);
+
+		JButton b1 = new JButton("Add");
+		b1.addActionListener(new AddButton());
+		JButton b2 = new JButton("Save");
+		b2.addActionListener(new SaveWordFile());
+		add(b1);
+		add(b2);
+
+		wordCount = new JLabel("Word Count = ".concat(Integer.toString(word.size())));
+		wordCount.setHorizontalAlignment(SwingConstants.CENTER);
+		add(wordCount);
+
+		saveText = new JLabel("");
+		add(saveText);
+		
+		JLabel findLabel = new JLabel("Find:");
+		JLabel findSuccess = new JLabel("");
+		findtf = new JTextField(10);
+		findtf.addKeyListener(new KeyAdapter() {
+			public void keyPressed(KeyEvent e) {
+				int code = e.getKeyCode();
+
+				switch (code) {
+				case KeyEvent.VK_ENTER:
+					Iterator<String> it = new WordFile().getWord().iterator();
+					while(it.hasNext()) {
+						String w = it.next();
+						if(w.equals(findtf.getText()))
+							break;
+					}
+					
+					if(it.hasNext()) {
+						TextDelay td = new TextDelay(findSuccess, "Find Successful!");
+						td.start();
+					}
+					else {
+						TextDelay td = new TextDelay(findSuccess, "Find Fail!");
+						td.start();
+					}
+					
+					findtf.setText("");
+				}
+			}
+		});
+		
+		add(findLabel);
+		add(findtf);
+		add(findSuccess);
+	}
+	
+	public void setFont(String fontname, int fontsize) {
+		saveText.setFont(new Font(fontname, Font.BOLD, fontsize));
+		wordCount.setFont(new Font(fontname, Font.BOLD, fontsize));
+	}
+	
+	public void setBackground(int r, int g, int b) {
+		Color c = new Color(r, g, b);
+		setBackground(c);
+	}
+
+	class AddButton implements ActionListener {
+		public void actionPerformed(ActionEvent e) {
+			if (!tf.getText().equals("")) {
+				word.add(tf.getText());
+				tf.setText("");
+
+				wordCount.setText("Word Count = ".concat(Integer.toString(word.size())));
+			}
+		}
+	}
+
+	class SaveWordFile implements ActionListener {
+		public void actionPerformed(ActionEvent e) {
+			try {
+				FileWriter fout = new FileWriter("word.txt");
+
+				for (int i = 0; i < word.size(); i++) {
+					fout.write(word.get(i));
+					fout.write("\r\n", 0, 2);
+				}
+				fout.close();
+				tf.setText("");
+				
+				TextDelay td = new TextDelay(saveText, "Save Successful!");
+				td.start();
+			} catch (IOException e1) {
+				System.out.println("입출력 오류");
+				System.exit(0);
+			}
+		}
+	}
+	
+	class TextDelay extends Thread {
+		private JLabel label;
+		private String str;
+		public TextDelay(JLabel label, String str) {
+			this.label = label;
+			this.str = str;
+		}
+		public void run() {
+			label.setText(str);
+			try {
+				sleep(1000);
+				label.setText("                         ");
+			} catch (InterruptedException e) {
+			}
+		}
+	}
+}

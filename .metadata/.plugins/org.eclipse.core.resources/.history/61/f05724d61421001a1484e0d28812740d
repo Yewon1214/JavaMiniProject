@@ -1,0 +1,289 @@
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.StringTokenizer;
+import java.util.Vector;
+
+import javax.swing.*;
+
+public class GameFrame extends JFrame {
+	private GamePanel gamePanel = new GamePanel();
+	private ScorePanel scorePanel = new ScorePanel();
+	private EditPanel editPanel = new EditPanel();
+
+	private JFrame frame;
+
+	public GameFrame() {
+		super("타이핑 게임");
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setSize(800, 600);
+		setResizable(false);
+		splitPane();
+
+		frame = this;
+
+		setJMenuBar(makeMenu());
+		add(makeToolBar(), BorderLayout.NORTH);
+
+		setVisible(true);
+	}
+
+	private void splitPane() {
+		JSplitPane hPane = new JSplitPane();
+		getContentPane().add(hPane, BorderLayout.CENTER);
+
+		hPane.setOrientation(JSplitPane.HORIZONTAL_SPLIT);
+		hPane.setDividerLocation(500);
+		hPane.setEnabled(false); // split bar를 움직일 수 없도록 하기 위해
+		hPane.setLeftComponent(gamePanel);
+
+		JSplitPane pPane = new JSplitPane();
+		hPane.setRightComponent(pPane);
+		pPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
+		pPane.setDividerLocation(200);
+		pPane.setTopComponent(scorePanel);
+		pPane.setBottomComponent(editPanel);
+	}
+
+	public JMenuBar makeMenu() {
+		JMenuBar mb = new JMenuBar();
+
+		JMenu fileMenu = new JMenu("File");
+		JMenuItem fileMI[] = new JMenuItem[3];
+		String fileMN[] = { "Home", "Word File Open", "Exit" };
+		for (int i = 0; i < fileMI.length; i++) {
+			fileMI[i] = new JMenuItem(fileMN[i]);
+			if (i == 2)
+				fileMenu.addSeparator();
+
+			fileMI[i].addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					JMenuItem item = (JMenuItem) e.getSource();
+					if (item == fileMI[0]) {
+						MainFrame g = new MainFrame();
+						setVisible(false);
+						dispose();
+					} else if (item == fileMI[1]) {
+						WordDialog wd = new WordDialog(frame, "Word.txt");
+					} else if (item == fileMI[2]) {
+						System.exit(0);
+					}
+				}
+			});
+
+			fileMenu.add(fileMI[i]);
+		}
+
+		JMenu editMenu = new JMenu("Edit");
+		JMenuItem editMI[] = new JMenuItem[3];
+		String editMN[] = { "Font", "FG Color", "BG Color" };
+		for (int i = 0; i < editMI.length; i++) {
+			editMI[i] = new JMenuItem(editMN[i]);
+			editMI[i].addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					JMenuItem item = (JMenuItem) e.getSource();
+					if (item == editMI[0]) {
+						FontDialog fd = new FontDialog(frame, "Set Font");
+					} else if (item == editMI[1]) {
+						FgColorDialog fd = new FgColorDialog(frame, "Set Foreground");
+					} else if (item == editMI[2]) {
+						BgColorDialog bd = new BgColorDialog(frame, "Set Background");
+					}
+				}
+			});
+			editMenu.add(editMI[i]);
+		}
+
+		JMenu viewMenu = new JMenu("View");
+		JMenuItem viewMI[] = new JMenuItem[2];
+		String viewMN[] = { "Help", "Rank" };
+		for (int i = 0; i < viewMI.length; i++) {
+			viewMI[i] = new JMenuItem(viewMN[i]);
+			viewMenu.add(viewMI[i]);
+		}
+
+		mb.add(fileMenu);
+		mb.add(editMenu);
+		mb.add(viewMenu);
+
+		return mb;
+	}
+
+	class WordDialog extends JDialog {
+		public WordDialog(JFrame frame, String title) {
+			super(frame, title, true);
+			setLayout(new BorderLayout());
+			setSize(200, 600);
+
+			JLabel titleLabel = new JLabel("word.txt");
+			titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+			Vector<String> word = new WordFile().getWord();
+
+			JList<String> wordList = new JList<String>(word);
+
+			add(titleLabel, BorderLayout.NORTH);
+			add(new JScrollPane(wordList));
+
+			setVisible(true);
+		}
+	}
+
+	class FontDialog extends JDialog {
+		public FontDialog(JFrame frame, String title) {
+			super(frame, title, true);
+			setLayout(new FlowLayout());
+			setSize(300, 100);
+
+			JLabel fontLabel = new JLabel("Font : ");
+			JTextField fontTextField = new JTextField("Arial", 20);
+
+			JButton saveBtn = new JButton("Save");
+			saveBtn.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					GameStart[] gs = gamePanel.getGameStart();
+					for (int i = 0; i < gs.length; i++) {
+						gs[i].setFont(fontTextField.getText(), 12);
+						scorePanel.setFont(fontTextField.getText(), 12);
+						editPanel.setFont(fontTextField.getText(), 12);
+					}
+					setVisible(false);
+				}
+			});
+			saveBtn.setHorizontalAlignment(SwingConstants.CENTER);
+
+			add(fontLabel);
+			add(fontTextField);
+			add(saveBtn);
+
+			setVisible(true);
+		}
+	}
+	
+	class FgColorDialog extends JDialog {
+		public FgColorDialog(JFrame frame, String title) {
+			super(frame, title, true);
+			setLayout(new FlowLayout());
+			setSize(200, 180);
+
+			JLabel exLabel = new JLabel("0 ~ 255 숫자를 넣어주세요.");
+
+			JLabel RLabel = new JLabel("R value : ");
+			JTextField RTextField = new JTextField("255", 10);
+			JLabel GLabel = new JLabel("G value : ");
+			JTextField GTextField = new JTextField("255", 10);
+			JLabel BLabel = new JLabel("B value : ");
+			JTextField BTextField = new JTextField("0", 10);
+
+			JButton saveBtn = new JButton("Save");
+			saveBtn.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					GameStart[] gs = gamePanel.getGameStart();
+					try {
+					for (int i = 0; i < gs.length; i++) {
+						gs[i].setForeground(Integer.parseInt(RTextField.getText()),
+								Integer.parseInt(GTextField.getText()), Integer.parseInt(BTextField.getText()));
+						scorePanel.setForeground(Integer.parseInt(RTextField.getText()),
+								Integer.parseInt(GTextField.getText()), Integer.parseInt(BTextField.getText()));
+						editPanel.setForeground(Integer.parseInt(RTextField.getText()),
+								Integer.parseInt(GTextField.getText()), Integer.parseInt(BTextField.getText()));
+					}
+						setVisible(false);
+					} catch (NumberFormatException e1) {
+						JOptionPane.showMessageDialog(null, "0~255범위 내의 숫자만 입력하세요!", "error", JOptionPane.ERROR_MESSAGE);
+					} catch (IllegalArgumentException e1) {
+						JOptionPane.showMessageDialog(null, "0~255범위 내의 숫자만 입력하세요!", "error", JOptionPane.ERROR_MESSAGE);
+					}
+				}
+			});
+
+			exLabel.setHorizontalAlignment(SwingConstants.CENTER);
+			saveBtn.setHorizontalAlignment(SwingConstants.CENTER);
+
+			add(exLabel);
+			add(RLabel);
+			add(RTextField);
+			add(GLabel);
+			add(GTextField);
+			add(BLabel);
+			add(BTextField);
+			add(saveBtn);
+
+			setVisible(true);
+		}
+	}
+
+	class BgColorDialog extends JDialog {
+		public BgColorDialog(JFrame frame, String title) {
+			super(frame, title, true);
+			setLayout(new FlowLayout());
+			setSize(200, 180);
+
+			JLabel exLabel = new JLabel("0 ~ 255 숫자를 넣어주세요.");
+
+			JLabel RLabel = new JLabel("R value : ");
+			JTextField RTextField = new JTextField("255", 10);
+			JLabel GLabel = new JLabel("G value : ");
+			JTextField GTextField = new JTextField("255", 10);
+			JLabel BLabel = new JLabel("B value : ");
+			JTextField BTextField = new JTextField("0", 10);
+
+			JButton saveBtn = new JButton("Save");
+			saveBtn.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {					
+					try {
+						scorePanel.setBackground(Integer.parseInt(RTextField.getText()),
+								Integer.parseInt(GTextField.getText()), Integer.parseInt(BTextField.getText()));
+						editPanel.setBackground(Integer.parseInt(RTextField.getText()),
+								Integer.parseInt(GTextField.getText()), Integer.parseInt(BTextField.getText()));
+						setVisible(false);
+					} catch (NumberFormatException e1) {
+						JOptionPane.showMessageDialog(null, "0~255범위 내의 숫자만 입력하세요!", "error", JOptionPane.ERROR_MESSAGE);
+					} catch (IllegalArgumentException e1) {
+						JOptionPane.showMessageDialog(null, "0~255범위 내의 숫자만 입력하세요!", "error", JOptionPane.ERROR_MESSAGE);
+					}
+				}
+			});
+
+			exLabel.setHorizontalAlignment(SwingConstants.CENTER);
+			saveBtn.setHorizontalAlignment(SwingConstants.CENTER);
+
+			add(exLabel);
+			add(RLabel);
+			add(RTextField);
+			add(GLabel);
+			add(GTextField);
+			add(BLabel);
+			add(BTextField);
+			add(saveBtn);
+
+			setVisible(true);
+		}
+	}
+
+	class helpDialog extends JDialog {
+		public helpDialog(JFrame frame, String title) {
+			super(frame, title, true);
+
+		}
+	}
+
+	public JToolBar makeToolBar() {
+		JToolBar tb = new JToolBar();
+		
+		tb.setEnabled(false);
+
+		JButton gameStartBtn = new JButton("Game Start");
+		gameStartBtn.addActionListener(gamePanel.new StartButton());
+		gameStartBtn.setToolTipText("게임을 시작합니다.");
+		tb.add(gameStartBtn);
+
+		return tb;
+	}
+}
